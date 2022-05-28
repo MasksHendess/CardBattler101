@@ -1,0 +1,39 @@
+﻿BUG: Always spawn one creature now idk why
+
+Turn based system
+- What phases we want?
+- Draw
+have Attack -> Enemy Attack
+
+
+get card animations working (without fuggin with scale)
+- attack animations
+- Idle animations
+
+figure out overworld and or other maps? Keep within same scene just pan camera lmao.
+- blueprint like inscryption
+- need overworld map
+- need Different nodes on map, like draft node, sac node, combine node, encounter node. item give node
+- start screen (feels easiest todo)
+- Build Your own Card thingy
+
+Make text box for narration 
+
+figure out and implement card abillities & Items
+-triggers
+-attack
+-perish
+-summon
+-enemy attack
+-kill
+
+-Clone
+-Token Create
+
+-deathtouch
+-flying / unblockable
+- Black lotus
+- double strike
+- Fecundity 
+- Undying
+-tutor?
