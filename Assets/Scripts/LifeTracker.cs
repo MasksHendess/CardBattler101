@@ -24,7 +24,7 @@ public class LifeTracker : MonoBehaviour
     public void damagePlayerFace(int damagetaken)
     {
         damageDelt -= damagetaken;
-        if(damageDelt <= -6)
+        if(damageDelt <= -10)
         {
             Debug.Log("GAME OVER YOU LOSE");
             Time.timeScale = 0;
@@ -35,7 +35,7 @@ public class LifeTracker : MonoBehaviour
     {
         // Inscryption Rules, first to 5 DMG wins
         damageDelt +=amount;
-        if(damageDelt >= 6)
+        if(damageDelt >= 10)
         {
             Debug.Log("GAME OVER YOU WIN");
             Time.timeScale = 0;
