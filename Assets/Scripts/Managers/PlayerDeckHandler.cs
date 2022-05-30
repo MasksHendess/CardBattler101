@@ -223,7 +223,6 @@ public class PlayerDeckHandler : MonoBehaviour
             }
         }
     }
-
     public void DrawManaCard()
     {
         if (manaDeck.Count <= 0)
@@ -264,6 +263,55 @@ public class PlayerDeckHandler : MonoBehaviour
             discardPile.Clear();
         }
     }
+    public void ReturnCardsToDeck()
+    {
+        //check bfSlots and hand for Cards
+        returnCardsAtSlotsToDeck(availableCardSlots);
+        returnCardsAtSlotsToDeck(availableBattlefieldSlots);
+      //restore manadeck
+        while(manaDeck.Count < 10)
+        {
+            enemyPrefab.CreatureType = "Land";
+            manaDeck.Add(enemyPrefab);
+            enemyPrefab.CreatureType = "";
+        }
+        manaDeckCount = 10;
+
+        //Empty Graveyard
+        foreach (var item in discardPile)
+        {
+            deck.Add(item);
+        }
+        discardPile.Clear();
+    }
+    private void returnCardsAtSlotsToDeck(bool[] Slots)
+    {
+        for (int i = 0; i < Slots.Length; i++)
+        {
+            if (Slots[i] == false)
+            {
+                Card card = FindObjectsOfType<Card>().Where(x => x.handIndex == i).FirstOrDefault();
+                card.handIndex = -1;
+                card.hasBeenPlayed = false;
+
+                if (card.CreatureType != "Land" && card.CreatureType != "Clone" && card.tokenCard == false)
+                {
+                    deck.Add(card);
+                }
+                else if (card.CreatureType == "Land")
+                {
+                    manaDeck.Add(card);
+                }
+                else if (card.CreatureType == "Clone" || card.tokenCard == true)
+                {
+                    // Clones
+                    GameObject.Destroy(card.gameObject);
+                }
+                card.gameObject.SetActive(false);
+                Slots[i] = true;
+            }
+        }
+    }
     private int checkCardsInHand()
     {
         int result = 0;
@@ -277,5 +325,4 @@ public class PlayerDeckHandler : MonoBehaviour
         return result;
     }
     #endregion
-
 }

@@ -37,8 +37,10 @@ public class LifeTracker : MonoBehaviour
         damageDelt +=amount;
         if(damageDelt >= 10)
         {
-            Debug.Log("GAME OVER YOU WIN");
-            Time.timeScale = 0;
+            PlayerDeckHandler.instance.ReturnCardsToDeck();
+            damageDelt = 0;
+            var camMan = FindObjectOfType<cameraManager>();
+            camMan.goToMapScreen();
         }
     }
 }

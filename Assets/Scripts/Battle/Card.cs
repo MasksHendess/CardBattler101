@@ -62,8 +62,8 @@ public class Card : MonoBehaviour
         }
         else 
         {
-            generateRandomCreatureCard(Random.Range(0, 14));
-          // getSpecificCreature(15);
+          //  generateRandomCreatureCard(Random.Range(0, 14));
+          getSpecificCreature(13);
         }
       //  Effect1="clone";
         //Keep track of starting values

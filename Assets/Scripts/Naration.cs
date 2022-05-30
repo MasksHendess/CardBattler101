@@ -7,9 +7,11 @@ public class Naration : MonoBehaviour
 {
    public TextMeshProUGUI Text;
     string inputText;
+    bool isWriting;
     // Start is called before the first frame update
     void Start()
     {
+        isWriting = false;
         Text.text = "";
     }
 
@@ -20,6 +22,7 @@ public class Naration : MonoBehaviour
     }
     IEnumerator MyIEnumerator()
     {
+        isWriting = true;
         Text.text = "";
         char[] textArray = inputText.ToCharArray();
         foreach (char singleLetter in textArray)
@@ -27,6 +30,7 @@ public class Naration : MonoBehaviour
             yield return new WaitForSeconds(0.01f);
             Text.text += singleLetter;
         }
+        isWriting = false;
     }
     IEnumerator tauntEnum()
     {
@@ -66,21 +70,18 @@ public class Naration : MonoBehaviour
         inputText = "Nice Top Deck!";
         StartCoroutine("MyIEnumerator");
     }
-
+    #region Gamble
     public void surviveRitual0(Card card)
     {
         inputText = card.Name + " survived the ritual. It became stronger than before. ";
      StartCoroutine("tauntEnum"); 
-    }
-    private void taunt()
-    {
-        StartCoroutine("MyIEnumerator");
     }
     public void gambleLine(string stat)
     {
         inputText = "Select a card to be judged. I will evalute its " +stat+" to determine how dissapointing it is.";
         StartCoroutine("MyIEnumerator");
     }
+    #endregion
     public void abominationLine(int i)
     {
         switch(i)
@@ -102,5 +103,23 @@ public class Naration : MonoBehaviour
                 break;
         }
         StartCoroutine("MyIEnumerator");
+    }
+
+    public void NpcHelloWorld(InteractionObject npc)
+    {
+        if(!isWriting)
+        { 
+        inputText = "Hello my name is " + npc.name +".";
+        StartCoroutine("MyIEnumerator");
+        }
+    }
+
+    public void npcTriggerBattle()
+    {
+        if (!isWriting)
+        {
+            inputText = "ITS TIME TO D-D-D-DUEL!!!!!";
+            StartCoroutine("MyIEnumerator");
+        }
     }
 }

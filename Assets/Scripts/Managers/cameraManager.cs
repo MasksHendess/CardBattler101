@@ -4,7 +4,7 @@ using System.Linq;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
-public class camera : MonoBehaviour
+public class cameraManager : MonoBehaviour
 {
     public static bool GameIsPaused = false;
     public GameObject pauseMenuUI;
@@ -13,7 +13,6 @@ public class camera : MonoBehaviour
    // public GameObject StartView;
     public GameObject GameView;
     public GameObject MapView;
-
     public Canvas DraftViewCanvas;
     public Canvas GameViewCanvas;
     public Canvas DeckInteractionViewCanvas;

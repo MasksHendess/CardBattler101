@@ -49,6 +49,8 @@ namespace Assets.Scripts
             applyBattlefieldSlots();
             applyCardSlots();
             //Defender effects
+            if(Defender)
+            { 
             if (Defender.Effect1 == "unsummon")
             {
                 unsummon(Attacker);
@@ -57,9 +59,9 @@ namespace Assets.Scripts
             {
                 porcupine(Attacker);
             }
-
+            }
             //attacker Effects
-            if (Attacker.Effect1 == "poison" && Attacker.Attack >= 1)
+            if (Attacker.Effect1 == "poison" && Attacker.Attack >= 1 && Defender)
             {
                 poison(Defender);
             }
