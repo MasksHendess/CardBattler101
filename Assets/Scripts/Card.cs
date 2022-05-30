@@ -1,4 +1,5 @@
 
+using Assets.Scripts;
 using Assets.Scripts.Managers;
 using System.Collections;
 using System.Collections.Generic;
@@ -24,11 +25,11 @@ public class Card : MonoBehaviour
     public string CreatureType;
     // Text box
     public string Trigger1;
-    public string Effect1;
+    public string Effect1; 
+    CreatureEffects effects;
     //Power Toughness
     public int Attack;
     public int Defense;
-    public string Gender;
 
     private int startingAttack;
     private int startingDefense;
@@ -47,7 +48,8 @@ public class Card : MonoBehaviour
     {
         gm = FindObjectOfType<PlayerDeckHandler>();
         DraftHandler = FindObjectOfType<DraftViewManager>();
-        spriteMan = FindObjectOfType<SpriteManager>();
+        spriteMan = FindObjectOfType<SpriteManager>(); 
+         effects = FindObjectOfType<CreatureEffects>();
         //Determine if Land or Creature
         var isLandCard = gm.cardIsFromManaDeck();
         if (isLandCard == true)
@@ -61,7 +63,7 @@ public class Card : MonoBehaviour
         else 
         {
             generateRandomCreatureCard(Random.Range(0, 14));
-           //getSpecificCreature(12);
+          // getSpecificCreature(15);
         }
       //  Effect1="clone";
         //Keep track of starting values
@@ -162,7 +164,9 @@ public class Card : MonoBehaviour
     public void dealDamage(Card target)
     {
         target.Defense -= Attack;
-        if (target.Defense <= 0 || Effect1 == "poison" && Attack >= 1)
+
+        effects.checkForattackEffect(this, target);
+        if (target.Defense <= 0 )
         {
             if (target.Enemy == true)
             {
@@ -170,19 +174,9 @@ public class Card : MonoBehaviour
             }
             else if (target.Enemy == false)
             {
-                var a = FindObjectsOfType<Naration>(); //  GameObject.FindGameObjectsWithTag("narratorGameView");
-                Naration nar = a.Where(x => x.tag == "narratorGameView").FirstOrDefault();
-                nar.DieMotherFucker();
                 KillPlayerTarget(target);
             }
-        }
-    }
-    public void Millstrike(List<Card> deck, int amount)
-    {
-        for (int i = 0; i < amount; i++)
-        {
-            var rng = Random.Range(0, deck.Count);
-            deck.Remove(deck[rng]);
+            effects.applyOnKillTriggers(this);
         }
     }
     private void killEnemyTarget(Card target)
@@ -256,6 +250,9 @@ public class Card : MonoBehaviour
     }
     private void generateRandomCreatureCard(int randomnumber)
     {
+        // Gör Hosts och Augments
+        // Hosts: creatures som vill ha abillities  2 be stronk
+        // Augments: Creatures som har abillites men kassa stats
         if (spriteMan == null)
         {
             spriteMan = FindObjectOfType<SpriteManager>();
@@ -263,55 +260,52 @@ public class Card : MonoBehaviour
         switch (randomnumber)
         {
             case 0:
-                createCard(spriteMan.getCardSprites(5), "Gargaton", 7, 7, 5, "Big dumb dumb", "female");
+                createCard(spriteMan.getCardSprites(5), "Gargaton", 7, 7, 5, "Big dumb dumb");
                 break;
             case 1:
-                createCard(spriteMan.getCardSprites(4), "Big Bertha", 4, 4, 3, "Your Ex", "female");
+                createCard(spriteMan.getCardSprites(4), "Big Bertha", 4, 4, 3, "Your Ex");
                 break;
             case 2:
-                createCard(spriteMan.getCardSprites(6), "Valkyrie", 3, 2, 2, "Bear","female");
+                createCard(spriteMan.getCardSprites(6), "Valkyrie", 3, 2, 2, "Bear"); //Host
                 break;
             case 3:
-                createCard(spriteMan.getCardSprites(7), "Hellborn", 1, 1, 0, "Devil", "female");
+                createCard(spriteMan.getCardSprites(7), "Hellborn", 1, 1, 0, "Devil");
                 break;
             case 4:
-                createCard(spriteMan.getCardSprites(9), "Orochi", 1, 1, 2, "Snake-man ninja", "female", "poison"); // Deathtouch
+                createCard(spriteMan.getCardSprites(9), "Adder", 1, 1, 2, "Snake", "poison"); // Deathtouch, augment
                 break;
             case 5:
-                createCard(spriteMan.getCardSprites(3), "Bacon", 1, 6, 2, "Pig", "female");
+                createCard(spriteMan.getCardSprites(3), "Bacon", 1, 6, 2, "Mutated-Pig");
                 break;
             case 6:
-                createCard(spriteMan.getCardSprites(0), "Swashbuckler", 2, 1, 2, "Pirate", "male");
+                createCard(spriteMan.getCardSprites(0), "Hellhound", 2, 1, 2, "Dog");
                 break;
             case 7:
-                createCard(spriteMan.getCardSprites(2), "Ol' Granny", 1, 1, 1, "Old Lady", "female");
+                createCard(spriteMan.getCardSprites(2), "Draugr", 1, 1, 1, "Undead");
                 break;
             case 8:
-                createCard(spriteMan.getCardSprites(1), "Cpt.PimpSlap", 3, 1, 2, "Orc Pirate", "male");
+                createCard(spriteMan.getCardSprites(1), "Stitchling", 3, 1, 2, "Zombee");
                 break;
             case 9:
-                createCard(spriteMan.getCardSprites(8), "Turtle", 1, 4, 2, "Hero in a half shell", "male","ice");// on attack apply frozen solid on opponent preventing it from attacking for one turn
+                createCard(spriteMan.getCardSprites(8), "Ice Spider", 1, 4, 2, "Gigant Spider","ice");// on attack apply frozen solid on opponent preventing it from attacking for one turn
                 break;
             case 10:
-                createCard(spriteMan.getCardSprites(10), "Piplup", 1, 1, 1, "Poggermon","male", "millstrike"); 
+                createCard(spriteMan.getCardSprites(10), "Piplup", 1, 1, 1, "Poggermon", "millstrike"); 
                 break;
             case 11:
-                createCard(spriteMan.getCardSprites(11), "Kate",1, 1, 2, "Poggermon", "female", "clone"); // ETB: create a token copy of itself on first available slot
+                createCard(spriteMan.getCardSprites(11), "Kate",1, 1, 2, "Poggermon",  "clone"); // ETB: create a token copy of itself on first available slot
                 break;
             case 12:
-                createCard(spriteMan.getCardSprites(12), "Big Cat", 1, 2, 2, "Cat", "female","multiattack");
+                createCard(spriteMan.getCardSprites(12), "DireWolf", 2, 3, 4, "Wolf", "multiattack");
                 break;
             case 13:
-                createCard(spriteMan.getCardSprites(13), "Angry Grandpa", 1, 1, 2, "Old guy", "male","token"); //ETB: Create a 1/1 token on first avialable slot
+                createCard(spriteMan.getCardSprites(13), "Gravedigger", 1, 1, 2, "SmollDog","token"); //ETB: Create a 1/1 token on first avialable slot
                 break;
             case 14:
-                createCard(spriteMan.getCardSprites(13), "Changling", 1, 1, 2, "Changling","Apache attack helicopter" ,"genderfluid"); //Passive: Both M and F
+                createCard(spriteMan.getCardSprites(13), "Changling", 1, 1, 2, "Changling" ,"random"); //
                 break;
             case 15:
-                createCard(spriteMan.getCardSprites(13), "Sean Conery", 1, 1, 2, "Bond-James-Bond", "male", "ladykiller"); //Deals +1 damage against grills
-                break;
-            case 16:
-                createCard(spriteMan.getCardSprites(13), "Princess", 1, 1, 2, "Your Ex", "female","manslayer"); //Deals +1 damage against YEBOIIIIIIIIIIIIIIIIIIZ
+                createCard(spriteMan.getCardSprites(13), "Vampire Spawn", 1, 2, 2, "Vampire", "bloodthirst"); //+1ATTK On kill
                 break;
             default:
                 createCard(spriteMan.getCardSprites(0), "ShitstickNicksdick", 4, 4, 4, "Elephant",  "Trample");
@@ -319,7 +313,7 @@ public class Card : MonoBehaviour
         }
     }
 
-    private void createCard(Sprite sprite, string name, int attack, int defense, int castingcost, string creaturetype,string gender, string effect = "")
+    private void createCard(Sprite sprite, string name, int attack, int defense, int castingcost, string creaturetype, string effect = "")
     {
         // Card card = new Card();
         spriteRenderer.sprite = sprite;
@@ -328,7 +322,6 @@ public class Card : MonoBehaviour
         CastingCost = castingcost;
         Name = name;
         CreatureType = creaturetype;
-        Gender = gender;
         //  Trigger1 = trigger;
         Effect1 = effect;
     }
