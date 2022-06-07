@@ -19,9 +19,9 @@ public class PlayerInteraction : MonoBehaviour
         if (Input.GetKeyDown(KeyCode.Space) && currentInteractionObject)
         {
 
-            if (currentInteractionObjectScript.talks && currentInteractionObjectScript.message =="duel")
+            if (currentInteractionObjectScript.talks && currentInteractionObjectScript.message > -1)
             {
-                currentInteractionObjectScript.triggerBattle();
+                currentInteractionObjectScript.triggerEvent(currentInteractionObjectScript.message);
             }
             else if(currentInteractionObjectScript.talks)
             {

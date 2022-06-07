@@ -6,13 +6,11 @@ using UnityEngine;
 public class InteractionObject : MonoBehaviour
 {
     public bool talks;
-    public string message;
+    public int message;
     private Naration narrator;
-    public cameraManager camMan;
     // Start is called before the first frame update
     void Start()
-    {
-        camMan = FindObjectOfType<cameraManager>(); 
+    { 
         var narators = FindObjectsOfType<Naration>();
         narrator = narators.Where(x => x.tag == "narratorMap").FirstOrDefault();
     }
@@ -25,21 +23,20 @@ public class InteractionObject : MonoBehaviour
     {
         narrator.NpcHelloWorld(this);
     }
-
-    public void triggerBattle()
-    { 
-        narrator.npcTriggerBattle();
-        camMan.goToGameScreen();
-    }
-
-    private bool yesNoDialogue()
+    //public void OnMouseDown()
+    //{
+    //    StartCoroutine(SuckABigFuckingDick());
+    //}
+    IEnumerator loadLevel()
     {
-        //Dialogue
-        // >Yes
-        // No
-        if (true)
-            return true;
-        else
-            return false;
+        narrator.npcTriggerEvent(message);
+        PlayerMovement.instance.freeze = true;
+        yield return new WaitForSeconds(2f);
+        LevelLoader.instance.LoadNextLevel(message);
     }
+    public void triggerEvent(int index)
+    {
+        StartCoroutine(loadLevel());
+    }
+
 }

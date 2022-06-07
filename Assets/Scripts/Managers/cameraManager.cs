@@ -1,6 +1,10 @@
+using Assets.Scripts.Managers;
+using Assets.Scripts.TradeView;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -15,11 +19,29 @@ public class cameraManager : MonoBehaviour
     public GameObject MapView;
     public Canvas DraftViewCanvas;
     public Canvas GameViewCanvas;
+    public Canvas TradeViewCanvas;
     public Canvas DeckInteractionViewCanvas;
     public Canvas MapViewCanvas;
     public Canvas PauseViewCanvas;
 
     public List<Canvas> AllCanvases;
+    #region Buildmanager setup Singelton pattern
+    // only 1 instance of BuildManager in scene that is easy to acsess
+    // Dont duplicate this region 
+    public static cameraManager instance; //self reference
+    private void Awake()
+    {
+        //check if instance already exisist
+        if (instance != null)
+        {
+            Debug.LogError("More than one camManager in scene");
+            return;
+        }
+
+        instance = this;
+    }
+    #endregion
+
     // Start is called before the first frame update
     void Start()
     {
@@ -30,7 +52,7 @@ public class cameraManager : MonoBehaviour
     {
         if (Input.GetKeyDown(KeyCode.Escape))
         {
-            if(GameIsPaused)
+            if (GameIsPaused)
             {
                 Resume();
             }
@@ -41,7 +63,7 @@ public class cameraManager : MonoBehaviour
         }
     }
 
-   public void Resume()
+    public void Resume()
     {
         PauseViewCanvas.enabled = false;
        // PauseViewCanvas.gameObject.SetActive(false);
@@ -60,8 +82,10 @@ public class cameraManager : MonoBehaviour
     }
     public void Exit()
         {
+        Environment.Exit(0);
         Application.Quit(0);
     }
+    public Animator transition;
     public void changeView(Canvas eneabledCanvas, GameObject cameraposition)
     {
         foreach (var canvas in AllCanvases)
@@ -71,27 +95,33 @@ public class cameraManager : MonoBehaviour
         }
         eneabledCanvas.gameObject.SetActive(true);
         eneabledCanvas.enabled = true;
-     //   main.gameObject.transform.position = cameraposition.transform.position;
+        main.gameObject.transform.position = cameraposition.transform.position;
     }
     public void goToMapScreen()
     {
         changeView(MapViewCanvas, MapView);
+        PlayerMovement.instance.freeze = false;
     }
-    public void goToDeckInteractionScreen()
+    public void goToDeckInteractionScreen(int view)
     {
         changeView(DeckInteractionViewCanvas, MapView);
+        DeckInteractionManager.instance.view = view;
     }
-    public void goToDraftScreen()
+    public void goToDraftScreen(int view)
     {
         changeView(DraftViewCanvas, GameView);
+        DraftViewManager.instance.view = view;
     }
-    //public void goToStartScreen()
-    //{
-    //    changeView(startViewCanvas, StartView);
-    //}
+    public void goToTradeScreen(int view)
+    {
+        changeView(TradeViewCanvas, GameView);
+        TradeViewManager.instance.view = view;
+    }
     public void goToGameScreen()
     {
         changeView(GameViewCanvas, GameView);
+        PlayerDeckHandler.instance.DrawStartingHand();
+        CombatHandler.instance.gameState = gameState.DRAWPHASE;
     }
     public void changeCamera()
     {

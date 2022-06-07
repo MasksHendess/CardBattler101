@@ -5,7 +5,7 @@ using UnityEngine;
 
 public class Naration : MonoBehaviour
 {
-   public TextMeshProUGUI Text;
+    public TextMeshProUGUI Text;
     string inputText;
     bool isWriting;
     // Start is called before the first frame update
@@ -70,7 +70,18 @@ public class Naration : MonoBehaviour
         inputText = "Nice Top Deck!";
         StartCoroutine("MyIEnumerator");
     }
-    #region Gamble
+    #region DeckInteractionView
+    public void sacrifcie(int index)
+    {
+        if(!isWriting)
+        { 
+            if(index == 0)
+        inputText = "Cards... Cards... I hate cards... give me... Card... I will... cut it... ";
+           else if(index == 1)
+          inputText = "That Card... Is of intrest... Only to... Historians. I am... Satisfied.";
+            StartCoroutine("MyIEnumerator");
+        }
+    }
     public void surviveRitual0(Card card)
     {
         inputText = card.Name + " survived the ritual. It became stronger than before. ";
@@ -82,6 +93,15 @@ public class Naration : MonoBehaviour
         StartCoroutine("MyIEnumerator");
     }
     #endregion
+    #region draftview
+    public void LoadMutateLevelFail()
+    {
+        if (!isWriting)
+        {
+                inputText = "... You don't have enough cards...";
+            StartCoroutine("MyIEnumerator");
+        }
+    }
     public void abominationLine(int i)
     {
         switch(i)
@@ -93,10 +113,10 @@ public class Naration : MonoBehaviour
                 inputText = "Very well. Which one has the DANKEST CASTING COST?";
                 break;
             case 2:
-                inputText = "Huh. I wouldn't have picked that...\n Which one has the DANKEST ABILLITY?";
+                inputText = "Huh. I wouldn't have picked that... Which one has the DANKEST ABILLITY?";
                 break;
             case 3:
-                inputText = "YOUR CHILD IS BORN! ...\nWow so ugly... Let's put that right into your deck... ";
+                inputText = "YOUR CHILD IS BORN! ...Wow so ugly... Let's put that right into your deck... ";
                 break;
             default:
                 inputText = "Mr Sexxxis Pizza. Our special to day is Sexeroni! (its like peperoni but sexy)";
@@ -104,7 +124,27 @@ public class Naration : MonoBehaviour
         }
         StartCoroutine("MyIEnumerator");
     }
-
+    #endregion
+    public void Graveyard(int i)
+    {
+        switch (i)
+        {
+            case 0:
+                inputText = "Remember these cards? They all fought and perished for you...";
+                break;
+            case 1:
+                inputText = "A Card may earn a resurection... For a price. Sacrifice... Required...";
+                break;
+            case 2:
+                inputText = "A fitting sacrifice... Very well you may put that one back in your deck I suppose. ";
+                break;
+            default:
+                inputText = "All that for a drop of blood...";
+                break;
+        }
+        StartCoroutine("MyIEnumerator");
+    }
+    #region npc
     public void NpcHelloWorld(InteractionObject npc)
     {
         if(!isWriting)
@@ -114,12 +154,56 @@ public class Naration : MonoBehaviour
         }
     }
 
-    public void npcTriggerBattle()
+    public void npcTriggerEvent(int index)
     {
         if (!isWriting)
         {
-            inputText = "ITS TIME TO D-D-D-DUEL!!!!!";
+            switch (index)
+            {
+                case 0:
+                    inputText = "ITS TIME TO D-D-D-DUEL!!!!!";
+                    break;
+                case 1:
+                    inputText = "You activate the Drafting Machine...";
+                    break;
+                case 2:
+                    inputText = "You activate the 5T4T B00ZTR Machine";
+                    break;
+                case 3:
+                    inputText = "STONKS!";
+                    break;
+                case 4:
+                    inputText = "I'll help you get rid of cards...";
+                    break;
+                case 5:
+                    inputText = "Three corpses... they shall rise as one...";
+                    break;
+                case 6:
+                    inputText = "Two corpses... They shall rise as one...";
+                    break;
+                case 7:
+                    inputText = "I sell packs. Do you wish to buy packs...";
+                    break;
+                case 8:
+                    inputText = "Dying is mearly a setback...";
+                    break;
+                case 9:
+                    inputText = "Three creatures... Starving... Save one?";
+                    break;
+                case 10:
+                    inputText = "Three creatures... kungfu fighting... which one wasn't as fast as lightning?";
+                    break;
+                default:
+                    inputText = "It's not about the money. It's about sending a message.";
+                    break;
+            }
             StartCoroutine("MyIEnumerator");
         }
+    }
+    #endregion
+    public void resetText()
+    {
+        inputText = "";
+        StartCoroutine("MyIEnumerator");
     }
 }

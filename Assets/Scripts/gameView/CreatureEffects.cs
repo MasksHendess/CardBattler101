@@ -16,12 +16,12 @@ namespace Assets.Scripts
 
          Transform[] cardSlots;
          bool[] availableCardSlots;
-        LifeTracker LifeTracker;
+       // LifeTracker LifeTracker;
 
         private void Start()
         {
             deckHandler = FindObjectOfType<PlayerDeckHandler>();
-            LifeTracker = FindObjectOfType<LifeTracker>();
+            //LifeTracker = FindObjectOfType<LifeTracker>();
         }
 
         private void applyCardSlots()
@@ -133,9 +133,9 @@ namespace Assets.Scripts
             if (defender != null)
                 attacker.dealDamage(defender);
             else if (defender == null && attacker.Enemy == false)
-                LifeTracker.damageEnemyFace(attacker.Attack);
+                CombatHandler.instance.dealDamage(attacker.Attack, "player");
             else if (defender == null && attacker.Enemy == true)
-                LifeTracker.damagePlayerFace(attacker.Attack);
+                CombatHandler.instance.dealDamage(attacker.Attack, "enemy");
         }
         public void Millstrike(List<Card> deck, int amount)
         {

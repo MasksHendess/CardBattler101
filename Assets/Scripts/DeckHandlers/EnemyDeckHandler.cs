@@ -5,6 +5,22 @@ using UnityEngine;
 
 public class EnemyDeckHandler : MonoBehaviour
 {
+    #region Buildmanager setup Singelton pattern
+    // only 1 instance of BuildManager in scene that is easy to acsess
+    // Dont duplicate this region 
+    public static EnemyDeckHandler instance; //self reference
+    private void Awake()
+    {
+        //check if instance already exisist
+        if (instance != null)
+        {
+            Debug.LogError("More than one BuildManager in scene");
+            return;
+        }
+
+        instance = this;
+    }
+    #endregion
     public Card enemyPrefab;
 
     public List<Card> enemyDeck; 

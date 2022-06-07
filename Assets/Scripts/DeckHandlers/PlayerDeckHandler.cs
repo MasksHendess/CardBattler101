@@ -4,6 +4,8 @@ using UnityEngine;
 using TMPro;
 using System.Linq;
 using UnityEngine.EventSystems;
+using Assets.Scripts.Managers;
+using Assets.Scripts.TradeView;
 
 public class PlayerDeckHandler : MonoBehaviour
 {
@@ -70,6 +72,7 @@ public class PlayerDeckHandler : MonoBehaviour
         camAnim = Camera.main.GetComponent<Animator>();
         manaDeckCount = manaDeck.Count;
         StartingCard = enemyPrefab;
+        // generate starting deck
         for (int i = 0; i < 4; i++)
         {
             //  StartingCard.GetRandomGeneratedCreature();
@@ -80,6 +83,42 @@ public class PlayerDeckHandler : MonoBehaviour
             allInstantiatedObjects.Add(a.gameObject);
             deck.Add(a);
         }
+        // generate starting graveyard (for testing)
+        //for (int i = 0; i < 4; i++)
+        //{
+        //    //  StartingCard.GetRandomGeneratedCreature();
+
+        //    var a = Instantiate(StartingCard);
+        //    a.getSpecificCreature(13);
+        //    a.gameObject.SetActive(false);
+        //    allInstantiatedObjects.Add(a.gameObject);
+        //    discardPile.Add(a);
+        //}
+    }
+    public void addCardToDeck(Card card)
+    {
+        deck.Add(card);
+        card.gameObject.SetActive(false);
+    }
+    public void removeCardFromDeck(Card card)
+    {
+        deck.Remove(card);
+    }
+    public void addCardToGraveyard(Card card)
+    {
+        discardPile.Add(card);
+        card.gameObject.SetActive(false);
+    }
+    public Card getRandomCardFromGraveyard()
+    {
+        Card randomCard = discardPile[Random.Range(0, discardPile.Count)]; 
+        discardPile.Remove(randomCard); 
+        randomCard.gameObject.SetActive(true);
+        return randomCard;
+    }
+    public void removeCardFromGraveyard(Card card)
+    {
+        discardPile.Remove(card);
     }
     private void Update()
     {
@@ -179,6 +218,62 @@ public class PlayerDeckHandler : MonoBehaviour
     }
     #endregion
     #region CardDraw&DeckInteraction
+    public void DrawStartingHand()
+    {
+        getCardFromManaDeck();
+        for (int i = 0; i < 2; i++)
+        {
+            getCardFromDeck();
+        }
+    }
+    private void getCardFromDeck()
+    {
+        //Draw random card from deck
+        Card randomCard = deck[Random.Range(0, deck.Count)];
+        // Put in hand
+        for (int i = 0; i < availableCardSlots.Length; i++)
+        {
+            if (availableCardSlots[i] == true)
+            {
+                randomCard.gameObject.SetActive(true);
+                randomCard.handIndex = i;
+                randomCard.transform.position = cardSlots[i].position;
+                randomCard.Enemy = false;
+                randomCard.hasBeenPlayed = false;
+                deck.Remove(randomCard);
+                //  Debug.Log(randomCard.gameObject);
+                if (!allInstantiatedObjects.Contains(randomCard.gameObject))
+                {
+                    // gör ny obj för randomCard duger inte för Unity, unity tycker randomCard är samma all the time.
+                    // Eller ja obj represnterar ett separat objekt de e d som ska hända anyway
+                    Card obj = Instantiate(randomCard, cardSlots[i].transform.position, cardSlots[i].transform.rotation);
+                    allInstantiatedObjects.Add(obj.gameObject);
+
+                }
+                availableCardSlots[i] = false;
+                return;
+            }
+        }
+    }
+    private void getCardFromManaDeck()
+    {
+        Card randomCard = manaDeck[Random.Range(0, manaDeck.Count)];
+        for (int i = 0; i < availableCardSlots.Length; i++)
+        {
+            if (availableCardSlots[i] == true)
+            {
+                randomCard.gameObject.SetActive(true);
+                randomCard.handIndex = i;
+                randomCard.transform.position = cardSlots[i].transform.position;
+                randomCard.Enemy = false;
+                randomCard.hasBeenPlayed = false;
+                manaDeck.Remove(randomCard);
+                Instantiate(randomCard);
+                availableCardSlots[i] = false;
+                return;
+            }
+        }
+    }
     public void DrawCard()
     {
         if (deck.Count <= 0)
@@ -187,40 +282,11 @@ public class PlayerDeckHandler : MonoBehaviour
             Time.timeScale = 0;
         }
 
-        if (deck.Count >= 1 && checkCardsInHand() < 9)
+        if (deck.Count >= 1 && checkCardsInHand() < 9 && CombatHandler.instance.gameState == gameState.DRAWPHASE)
         {
+            CombatHandler.instance.gameState = gameState.PLAYERTURN;
             camAnim.SetTrigger("shake");
-            var nar = FindObjectOfType<Naration>();
-            nar.NiceTopDeck();
-            Card randomCard = deck[Random.Range(0, deck.Count)];
-            for (int i = 0; i < availableCardSlots.Length; i++)
-            {
-                if (availableCardSlots[i] == true)
-                {
-                    randomCard.gameObject.SetActive(true);
-                    randomCard.handIndex = i;
-                    randomCard.transform.position = cardSlots[i].position;
-                    randomCard.Enemy = false;
-                    randomCard.hasBeenPlayed = false;
-                    deck.Remove(randomCard);
-                  //  Debug.Log(randomCard.gameObject);
-                    if (!allInstantiatedObjects.Contains(randomCard.gameObject))
-                    {
-                        // gör ny obj för randomCard duger inte för Unity, unity tycker randomCard är samma all the time.
-                        // Eller ja obj represnterar ett separat objekt de e d som ska hända anyway
-                        Card obj = Instantiate(randomCard, cardSlots[i].transform.position, cardSlots[i].transform.rotation);
-                        allInstantiatedObjects.Add(obj.gameObject);
-
-                    }
-                    availableCardSlots[i] = false;
-                    //Debug.Log(allInstantiatedObjects.Count + "< - that many gameobjs");
-                    //foreach (var item in allInstantiatedObjects)
-                    //{
-                    //    Debug.Log("item instansiated:" +item.id);
-                    //}
-                    return;
-                }
-            }
+            getCardFromDeck();
         }
     }
     public void DrawManaCard()
@@ -229,12 +295,12 @@ public class PlayerDeckHandler : MonoBehaviour
         {
             Debug.Log("You out of mana");
         }
-
-        if (manaDeck.Count >= 1 && checkCardsInHand() < 9)
+        CombatHandler.instance.gameState = gameState.DRAWPHASE;
+        if (manaDeck.Count >= 1 && checkCardsInHand() < 9 && CombatHandler.instance.gameState == gameState.DRAWPHASE)
         {
+            CombatHandler.instance.gameState = gameState.PLAYERTURN;
             camAnim.SetTrigger("shake");
             Card randomCard = manaDeck[Random.Range(0, manaDeck.Count)];
-            //LandCard randomCard = manaDeck[Random.Range(0, manaDeck.Count)];
             for (int i = 0; i < availableCardSlots.Length; i++)
             {
                 if (availableCardSlots[i] == true)
@@ -280,7 +346,9 @@ public class PlayerDeckHandler : MonoBehaviour
         //Empty Graveyard
         foreach (var item in discardPile)
         {
-            deck.Add(item);
+            // We goin hardcore on this mf!!!
+            TradeViewManager.instance.graveyard.Add(item);
+         //   deck.Add(item);
         }
         discardPile.Clear();
     }

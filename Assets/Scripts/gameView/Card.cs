@@ -1,6 +1,6 @@
-
 using Assets.Scripts;
 using Assets.Scripts.Managers;
+using Assets.Scripts.TradeView;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
@@ -23,9 +23,9 @@ public class Card : MonoBehaviour
     public string Name;
     public int CastingCost;
     public string CreatureType;
+    public string Item;
     // Text box
-    public string Trigger1;
-    public string Effect1; 
+    public string Effect1;
     CreatureEffects effects;
     //Power Toughness
     public int Attack;
@@ -35,9 +35,7 @@ public class Card : MonoBehaviour
     private int startingDefense;
 
     //-- Meta shit
-    public string Item;
-    public bool draftCard;
-    public bool GambleCard;
+    public int cardBehaviour; // Assign a behavior to Card depending on where the Card is instansiated & what canvas is active 
     public bool Enemy;
     public bool tokenCard;
     public bool hasBeenPlayed;
@@ -48,30 +46,31 @@ public class Card : MonoBehaviour
     {
         gm = FindObjectOfType<PlayerDeckHandler>();
         DraftHandler = FindObjectOfType<DraftViewManager>();
-        spriteMan = FindObjectOfType<SpriteManager>(); 
-         effects = FindObjectOfType<CreatureEffects>();
+        spriteMan = FindObjectOfType<SpriteManager>();
+        effects = FindObjectOfType<CreatureEffects>();
         //Determine if Land or Creature
         var isLandCard = gm.cardIsFromManaDeck();
         if (isLandCard == true)
         {
             createCard(spriteMan.getCardSprites(3), "LandShark", 0, 1, 0, "Land", "Add 1 Mana");
         }
-        else if(tokenCard == true)
+        else if (tokenCard == true)
         {
             //Handles Token generated cards. ( This Check is here so that else statement won't trigger and override the token creature)
         }
-        else 
+        else
         {
-          //  generateRandomCreatureCard(Random.Range(0, 14));
-          getSpecificCreature(13);
+            generateRandomCreatureCard(Random.Range(0, 14));
+            // getSpecificCreature(13);
         }
-      //  Effect1="clone";
+        //  Effect1="clone";
         //Keep track of starting values
         startingAttack = Attack;
         startingDefense = Defense;
-        //Generate unique Draft Cards.
-        if (draftCard)
+        // Handles Draft Cards
+        if (cameraManager.instance.DraftViewCanvas.enabled && cardBehaviour == 1)
         {
+            //Generate unique Draft Cards.
             DraftHandler.draftDeck.Add(this.Name);
             bool draftCardIsUnique = DraftHandler.draftCardIsUnique();
             //Reroll card values if duplicate.
@@ -98,44 +97,121 @@ public class Card : MonoBehaviour
     }
     private void OnMouseDown()
     {
-        if (!draftCard && !GambleCard && Item != "626" && !hasBeenPlayed)
-        {
+        #region GameView
+        if (cameraManager.instance.GameViewCanvas.enabled)
             moveToBattleField();
-        }
-        else if (GambleCard)
+        #endregion
+        #region draftview 
+        // Handles Reverse Looting
+        else if (cameraManager.instance.DraftViewCanvas.enabled && cardBehaviour == 4)
         {
-            DeckInteractionManager deckInteractionManager = FindObjectOfType<DeckInteractionManager>();
-            gameObject.transform.position = deckInteractionManager.GambleSlots[1].transform.position;
+            cardBehaviour = 0;
+            MoveToDiscardPile();  //Step2: Move picked card (this) to GY.
+            putUnwantedCardsInDeck();// rest goes into Decku.
+            DraftViewManager.instance.leaveView();
+        }
+        // Handles Looting
+        else if (cameraManager.instance.DraftViewCanvas.enabled && cardBehaviour == 3)
+        {
+            cardBehaviour = 0;
+            moveToDeck();  //Step2: Move picked card (this) to deck.
+            putUnwantedCardsInGraveyard();// rest goes into graveyard.
+            DraftViewManager.instance.leaveView();
+        }
+        //Handles Mutate Cards
+        else if (cameraManager.instance.DraftViewCanvas.enabled && cardBehaviour == 2)//(MutateCard)
+        {
+            DraftHandler.createGirlfriend(this);
+        }
+        //Handles DraftedCards
+        else if (cameraManager.instance.DraftViewCanvas.enabled && cardBehaviour == 1)//(draftCard)
+        {
+            // Step 1: handled by PlayerDeckHandler DraftCard()
+            //Step 2: Add To Deck
+            cardBehaviour = 0;
+            moveToDeck();
+            //Step 3: Delete unwanted Cards
+            removeUnwantedCards();
+            DraftViewManager.instance.leaveView();
+        }
+        #endregion
+        #region deckinteractionview  
+        // Handle GambleCard
+        else if (cameraManager.instance.DeckInteractionViewCanvas.enabled && cardBehaviour == 1)//(GambleCard)
+        {
+            gameObject.transform.position = DeckInteractionManager.instance.GambleSlots[1].transform.position;
             handIndex = 50;
             var list = GameObject.FindObjectsOfType<Card>();
             foreach (var item in list)
             {
-                if (item.GambleCard == true)
+                if (cardBehaviour == 1)
                 {
-                    item.GambleCard = false;
+                    cardBehaviour = 0;
                 }
             }
         }
-        else if (Item == "626")
+        //Handle Combine Card
+        else if (cameraManager.instance.DeckInteractionViewCanvas.enabled && cardBehaviour == 2)
         {
-            Item = "";
-            DraftHandler.createGirlfriend(this);
-        }
-        //Handles DraftedCards
-        else if (draftCard)
-        {
-            // Step 1: handled by PlayerDeckHandler DraftCard()
-            //Step 2: Add To Deck
-            draftCard = false;
+            var card = GameObject.FindObjectsOfType<Card>().Where(x => x.Name == this.Name && x.cardBehaviour == 2).ToList();
+            //make this card this card + card1
+            DeckInteractionManager.instance.makeTwoCardsOneCard(this, card[1]);
+            cardBehaviour = 0;
             moveToDeck();
-            //Step 3: Delete unwanted Cards
-            var list = GameObject.FindObjectsOfType<Card>();
+            var list = GameObject.FindObjectsOfType<Card>().Where(x => x.cardBehaviour == 2).ToList();
             foreach (var item in list)
             {
-                if (item.draftCard == true)
-                {
-                    GameObject.Destroy(item.gameObject);
-                }
+                item.cardBehaviour = 0;
+                item.gameObject.SetActive(false);
+
+            }
+        }
+        // Dont need to handle Sacrifice node because it should execute the same behaviour as a gamblecard untill its button interaction  
+        #endregion
+        #region Tradeview
+        else if (cameraManager.instance.TradeViewCanvas.enabled && cardBehaviour == 3 ||cameraManager.instance.TradeViewCanvas.enabled && cardBehaviour == 2)
+        {
+            TradeViewManager.instance.theThing(this, cardBehaviour);
+            var collections = GameObject.FindObjectsOfType<Card>();
+            var collection = collections.Where(x => x.cardBehaviour == cardBehaviour);
+            foreach (var item in collection)
+            {
+                if (item != this)
+                    item.gameObject.SetActive(false);
+            }
+        }
+        #endregion
+    }
+    private void putUnwantedCardsInDeck()
+    {
+        var list = GameObject.FindObjectsOfType<Card>();
+        foreach (var item in list)
+        {
+            if (item.cardBehaviour != 0)
+            {
+                PlayerDeckHandler.instance.addCardToDeck(item);
+            }
+        }
+    }
+    private void putUnwantedCardsInGraveyard()
+    {
+        var list = GameObject.FindObjectsOfType<Card>();
+        foreach (var item in list)
+        {
+            if (item.cardBehaviour != 0)
+            {
+                PlayerDeckHandler.instance.addCardToGraveyard(item);
+            }
+        }
+    }
+    private void removeUnwantedCards()
+    {
+        var list = GameObject.FindObjectsOfType<Card>();
+        foreach (var item in list)
+        {
+            if (item.cardBehaviour != 0)
+            {
+                GameObject.Destroy(item.gameObject);
             }
         }
     }
@@ -166,7 +242,7 @@ public class Card : MonoBehaviour
         target.Defense -= Attack;
 
         effects.checkForattackEffect(this, target);
-        if (target.Defense <= 0 )
+        if (target.Defense <= 0)
         {
             if (target.Enemy == true)
             {
@@ -206,7 +282,7 @@ public class Card : MonoBehaviour
     private void moveToBattleField()
     {
         // Handles Cards in hand
-        if (!hasBeenPlayed)
+        if (!hasBeenPlayed && CombatHandler.instance.gameState == gameState.PLAYERTURN)
         {
             //Find Land Cards on Battlefield
             List<Card> availableManaz = GameObject.FindObjectsOfType<Card>().ToList();
@@ -234,8 +310,7 @@ public class Card : MonoBehaviour
         //Instantiate(effect, transform.position, Quaternion.identity);
         this.Attack = startingAttack;
         this.Defense = startingDefense;
-        gm.discardPile.Add(this);
-        gameObject.SetActive(false);
+        gm.addCardToGraveyard(this);
     }
     #endregion
     #region CreateCreature
@@ -287,32 +362,31 @@ public class Card : MonoBehaviour
                 createCard(spriteMan.getCardSprites(1), "Stitchling", 3, 1, 2, "Zombee");
                 break;
             case 9:
-                createCard(spriteMan.getCardSprites(8), "Ice Spider", 1, 4, 2, "Gigant Spider","ice");// on attack apply frozen solid on opponent preventing it from attacking for one turn
+                createCard(spriteMan.getCardSprites(8), "Ice Spider", 1, 4, 2, "Gigant Spider", "ice");// on attack apply frozen solid on opponent preventing it from attacking for one turn
                 break;
             case 10:
-                createCard(spriteMan.getCardSprites(10), "Piplup", 1, 1, 1, "Poggermon", "millstrike"); 
+                createCard(spriteMan.getCardSprites(7), "Piplup", 1, 1, 1, "Poggermon", "millstrike");
                 break;
             case 11:
-                createCard(spriteMan.getCardSprites(11), "Kate",1, 1, 2, "Poggermon",  "clone"); // ETB: create a token copy of itself on first available slot
+                createCard(spriteMan.getCardSprites(6), "Kate", 1, 1, 2, "Poggermon", "clone"); // ETB: create a token copy of itself on first available slot
                 break;
             case 12:
-                createCard(spriteMan.getCardSprites(12), "DireWolf", 2, 3, 4, "Wolf", "multiattack");
+                createCard(spriteMan.getCardSprites(5), "DireWolf", 2, 3, 4, "Wolf", "multiattack");
                 break;
             case 13:
-                createCard(spriteMan.getCardSprites(13), "Gravedigger", 1, 1, 2, "SmollDog","token"); //ETB: Create a 1/1 token on first avialable slot
+                createCard(spriteMan.getCardSprites(4), "Gravedigger", 1, 1, 2, "SmollDog", "token"); //ETB: Create a 1/1 token on first avialable slot
                 break;
             case 14:
-                createCard(spriteMan.getCardSprites(13), "Changling", 1, 1, 2, "Changling" ,"random"); //
+                createCard(spriteMan.getCardSprites(3), "Changling", 1, 1, 2, "Changling", "random"); //
                 break;
             case 15:
-                createCard(spriteMan.getCardSprites(13), "Vampire Spawn", 1, 2, 2, "Vampire", "bloodthirst"); //+1ATTK On kill
+                createCard(spriteMan.getCardSprites(2), "Vampire Spawn", 1, 2, 2, "Vampire", "bloodthirst"); //+1ATTK On kill
                 break;
             default:
-                createCard(spriteMan.getCardSprites(0), "ShitstickNicksdick", 4, 4, 4, "Elephant",  "Trample");
+                createCard(spriteMan.getCardSprites(1), "ShitstickNicksdick", 4, 4, 4, "Elephant", "Trample");
                 break;
         }
     }
-
     private void createCard(Sprite sprite, string name, int attack, int defense, int castingcost, string creaturetype, string effect = "")
     {
         // Card card = new Card();
